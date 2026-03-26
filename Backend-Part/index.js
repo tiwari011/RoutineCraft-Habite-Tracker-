@@ -14,7 +14,12 @@ const aiRouter = require('./Routes/aiRouter');
 const db = require('./Models/Database');
 
 // ----- MIDDLEWARE -----
-app.use(cors({ origin: 'http://localhost:5173' })); // allow React frontend
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://routine-craft-habite-tracker.vercel.app'
+  ]
+})); // allow React frontend
 app.use(express.json()); // parse JSON bodies
 
 // ----- ROUTES -----

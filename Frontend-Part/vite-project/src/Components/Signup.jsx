@@ -25,7 +25,7 @@ function SignUp() {
   const onSubmit = async (data) => {
     await new Promise((resolve) => setTimeout(resolve, 3000));
     try {
-      const response = await fetch("http://localhost:8080/auth/signup", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8080"}/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

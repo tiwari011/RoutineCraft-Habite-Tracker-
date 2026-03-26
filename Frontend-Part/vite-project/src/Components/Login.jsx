@@ -5,14 +5,7 @@ import Loader from "./Loader";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { GoogleLogin } from "@react-oauth/google";
 
-const redirectAfterLogin = async (navigate) => {
-  const habits = await fetchHabits();  // uses the saved token
-  if (habits && habits.length > 0) {
-    navigate("/myday");          // returning user with habits
-  } else {
-    navigate("/lifestyleselection");  // new user, no habits yet
-  }
-};
+
 const features = [
   "Track habits daily with streaks",
   "Personalised lifestyle routines",
@@ -25,7 +18,7 @@ const features = [
 function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-
+const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
   const {
     register,
     handleSubmit,
@@ -34,7 +27,7 @@ function Login() {
 
   const onSubmit = async (data) => {
     try {
-      const response = await fetch("http://localhost:8080/auth/login", {
+      const response = await fetch(`${API}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -43,7 +36,7 @@ function Login() {
       if (result.success) {
         localStorage.setItem("token", result.jwtToken);
         localStorage.setItem("name", result.user.name);
-        navigate("/lifestyleselection");
+      result.isNewUser ? navigate("/lifestyleselection") : navigate("/myday");
       
       } else {
         alert("Login failed: " + result.message);
@@ -55,7 +48,7 @@ function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await fetch("http://localhost:8080/auth/google", {
+      const response = await fetch(`${API}/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential: credentialResponse.credential }),
