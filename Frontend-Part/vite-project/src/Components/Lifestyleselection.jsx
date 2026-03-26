@@ -1,161 +1,222 @@
-import React, { useEffect, useState } from 'react'
-import logo from "../assets/Images/logo.png"
-
-import { FiLogOut } from "react-icons/fi";
+import React, { useEffect, useState } from "react";
+import logo from "../assets/Images/logo.png";
 import { useNavigate } from "react-router-dom";
+import HabitCoach from "./HabitCoach";
+import { fetchHabits, addHabitApi, updateHabitApi,deleteHabitApi,}  from "../api/habitApi";
 function Lifestyleselection() {
-    const navigate = useNavigate();
-    const [habit, sethabit] = useState("");
-    const [habitTime, sethabitTime]= useState('');
-    const [habitslist, sethabitslist]= useState(()=>{
-        return JSON.parse(localStorage.getItem("habits")) || [];
-    });
-    const [editIndex, setEditIndex] = useState(null);
-   
-    const saveLs=(habitslist)=>{
-    localStorage.setItem("habits", JSON.stringify(habitslist))
-    }
-    const handleAdd = ()=>{
-        if(habit.trim()==""&&!habitTime)return;
-        const newHabit ={
-          id:editIndex !== null ? habitslist[editIndex] : Date.now(),
-          name:habit,
-          time:habitTime,
-          completed:false
-        };
-         let updatelist=   [...habitslist];
-   if(editIndex !==null){
-    // editing existing habit
-    updatelist[editIndex] = newHabit;
-  
-    setEditIndex(null);
-   }
-   else{
-    // adding new habit
-    updatelist.push(newHabit);
-   }
-         sethabitslist(updatelist)
-            saveLs(updatelist)
-            // clear input
-            sethabit("");
-            sethabitTime("");
-        
+  const navigate = useNavigate();
+
+  const [habit, setHabit] = useState("");
+  const [habitTime, setHabitTime] = useState("");
+
+  const [habitsList, setHabitsList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editHabitId, setEditHabitId] = useState(null);
+  const [activeTab, setActiveTab] = useState("manual");
+
+  useEffect(()=>{
+    const loadHabits = async ()=>{
+      const habits =await fetchHabits();
+      setHabitsList(habits);
+      setLoading(false);
     };
-    // edit button
-    const handleEdit =(index)=>{
-        sethabit(habitslist[index].name);
-        sethabitTime(habitslist[index].time);
-        setEditIndex(index);
+    loadHabits();
+   
+  },[]); 
 
-    }
-// delete button
-    const handleDelete=(index)=>{
-        const updatelist = habitslist.filter((item,i)=>i !== index)
-        sethabitslist(updatelist);
-        saveLs(updatelist)
 
+  const handleAdd = async() => {
+    if (!habit.trim() || !habitTime) return;
+ if (editHabitId) { const updated = await updateHabitApi(editHabitId, { name: habit, time: habitTime });
+setHabitsList(prev =>
+        prev.map(h => h._id === updated._id ? updated : h)
+ );
+setEditHabitId(null);
+} 
+
+else {
+const saved = await addHabitApi({ name: habit, time: habitTime });
+setHabitsList(prev => [...prev, saved]);
     }
-// logout button 
+ 
+    setHabit("");
+    setHabitTime("");
+
+
+};
+
+  
+  const handleEdit = (item) => {
+      setHabit(item.name);         
+    setHabitTime(item.time);     
+    setEditHabitId(item._id);
+  };
+
+  const handleDelete = async(id) => {
+ await deleteHabitApi(id);
+  setHabitsList(prev => prev.filter(h => h._id !== id));
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+      localStorage.removeItem("name");
     navigate("/login");
   };
 
+  const handleAddFromAI = async (aiHabit) => {
+    const saved = await addHabitApi({ name: aiHabit.habit, time: aiHabit.time });
+    setHabitsList(prev => [...prev, saved]);
+  };
  
 
   return (
- <>
- <div className="bg-purple-100 min-h-screen ">
- <header className='flex justify-between items-center   px-1 mt-0 pt-0 '>
-    <img src={logo} alt="Logo" className='w-auto h-26  ' />
-    {/* logout button */}
-  <button onClick={handleLogout} class="relative flex items-center gap-2 px-5 py-2
-          border-2 border-indigo-400 text-indigo-500
-          font-mono font-semibold rounded-xl overflow-hidden
-          hover:text-white transition-all duration-300 group">
-          <span class="absolute inset-0 bg-linear-to-r from-indigo-400 to-purple-400
-            transform -translate-x-full group-hover:translate-x-0
-            transition-transform duration-300"></span>
-          <span class="relative">Logout ✦</span>
+    <div className="bg-purple-100 min-h-screen flex flex-col items-center">
+      {/* HEADER */}
+      <header className="flex justify-between items-center w-full px-6 mt-0 pt-0">
+        <img src={logo} alt="Logo" className="w-auto h-26" />
+        <button
+          onClick={handleLogout}
+          className="relative flex items-center gap-2 px-5 py-2 border-indigo-500 bg-linear-to-r from-indigo-500 to-purple-500 text-white font-mono font-semibold rounded-xl overflow-hidden hover:text-white transition-all duration-300 group"
+        >
+          <span className="absolute inset-0 bg-linear-to-r from-indigo-400 to-purple-400 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></span>
+          <span className="relative">Logout ✦</span>
         </button>
+      </header>
 
+      <div className="h-0.5 mb-8 w-full bg-linear-to-r from-transparent via-indigo-400 to-transparent" />
 
- </header>
- <form className='p-6 sm:p-6'>
-    <h1 className='text-center sm:text-3xl text-3xl font-mono text-indigo-700'>Add your daily habits</h1>
-    <div className='flex flex-col items-center mt-10 sm:mt-10'>
-<input value={habit} onChange={(e)=>sethabit(e.target.value)} type="text" placeholder='Add your habits'className='border-2 h-10 sm:h-12 w-full max-w-xs sm:max-w-md rounded-md m-2 p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400' />
-<input type="time" value={habitTime} onChange={(e)=> sethabitTime(e.target.value)}/>
+      {/* MODE TOGGLE */}
+      <div className="flex gap-2 justify-center my-4">
+        <button
+          onClick={() => setActiveTab("manual")}
+          className={`px-5 py-2 rounded-xl font-semibold border-2 transition-all duration-200 ${
+            activeTab === "manual"
+              ? "bg-linear-to-r from-indigo-500 to-purple-500 text-white border-indigo-500"
+              : "border-indigo-400 text-indigo-500"
+          }`}
+        >
+          Add Manually
+        </button>
+        <button
+          onClick={() => setActiveTab("ai")}
+          className={`px-5 py-2 rounded-xl font-semibold border-2 transition-all duration-200 ${
+            activeTab === "ai"
+              ? "bg-linear-to-r from-indigo-500 to-purple-500 text-white border-indigo-500"
+              : "border-indigo-400 text-indigo-500"
+          }`}
+        >
+          AI Coach ✨
+        </button>
+      </div>
 
-  <button onClick={handleAdd}
-            className="
-              w-full max-w-xs sm:max-w-md
-              px-4 sm:px-6 py-2 sm:py-3
-              mt-3
-              bg-linear-to-r from-red-500 to-pink-500
-              text-white font-bold
-              rounded-md
-              shadow-xl
-              transform transition-all duration-300
-              hover:scale-105 hover:from-red-600 hover:to-pink-600
-              active:scale-95
-              focus:outline-none focus:ring-4 focus:ring-pink-300
-            "
-            type='button'
-          >
-            Add
-          </button>
-          
-          {/* display the habits */}
+      {/* ── TWO-COLUMN ON MD+, SINGLE COLUMN ON MOBILE ── */}
+      <div className="w-full max-w-5xl px-4 flex flex-col md:flex-row gap-6 items-stretch justify-center">
 
-       <div className="border-2 h-auto  w-full max-w-xs sm:max-w-md mt-6 p-4 rounded-md bg-white shadow-md">
-       <div className="flex justify-between items-center font-bold text-indigo-700 mb-2 
-                text-sm sm:text-base px-2 sm:px-0">
-  <p className="w-8">Habit</p>
-  <p className="">Completed By</p>
-  <p className=" text-center">Actions</p>
-</div>
+        {/* LEFT — Input Panel */}
+        <div className="w-full md:w-1/2 flex flex-col">
+          {activeTab === "manual" ? (
+            <div className="flex flex-col gap-4 p-6 bg-white rounded-3xl shadow-xl border border-gray-100 h-full">
+              <h2 className="text-lg font-bold text-indigo-700 font-mono">➕ Add a Habit and Time</h2>
+              <input
+                type="text"
+                value={habit}
+                onChange={(e) => setHabit(e.target.value)}
+                placeholder="Enter habit name"
+                className="w-full p-3 rounded-xl border-none text-base bg-white
+                           shadow-[5px_5px_15px_#bebebe,-5px_-5px_15px_#ffffff]
+                           focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+              <input
+                type="time"
+                value={habitTime}
+                onChange={(e) => setHabitTime(e.target.value)}
+                className="w-full p-3 rounded-xl border-none text-base bg-white
+                           shadow-[5px_5px_15px_#bebebe,-5px_-5px_15px_#ffffff]
+                           focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+              <button
+                onClick={handleAdd}
+                type="button"
+                className="w-full py-3 rounded-xl font-mono font-bold text-white text-lg bg-linear-to-r from-red-500 to-rose-500 shadow-lg hover:shadow-red-300 transform transition-all duration-300 hover:scale-105 hover:from-red-600 hover:to-rose-600 active:scale-95"
+              >
+                {editHabitId !== null ? "Update Habit ✏️" : "Add Habit 🔥"}
+              </button>
+            </div>
+          ) : (
+            /* AI Coach fills the left column */
+            <HabitCoach onAddHabit={handleAddFromAI} />
+          )}
+        </div>
 
-        {habitslist.map((item, index)=>{
-            return(
-                <div className=' gap-2 flex justify-between' key={index}>
-                    
-            <li className=' list-none font-mono text-indigo-700 text-bold w-16 truncate shrink-0 '>{item.name}</li>
-            <li className='list-none font-mono text-indigo-700 text-bold w-17 truncate shrink-0'>
- {item.time}
-</li>
-            <div className='flex gap-2 mb-2'>
-                {/* Edit button  */}
-    <button  onClick={()=>handleEdit(index)} type='button' className=" shrink-0 px-3 py-2 border border-cyan-500 text-cyan-500 hover:bg-cyan-500 hover:text-white font-medium rounded-lg transition-all duration-200">
-  Edit
-</button>
-{/* Delete button */}
-                   <button onClick={()=>handleDelete(index)} type='button' className=" shrink-0 px-3 py-2 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-medium rounded-lg transition-all duration-200">
-  Delete
-</button>
-                    </div>
+        {/* RIGHT — Habits List */}
+        <div className="w-full md:w-1/2 flex flex-col">
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 flex flex-col h-full">
+            <h2 className="text-lg font-bold text-indigo-700 font-mono mb-3">📋 Your Habits</h2>
+
+            <div className="flex-1 flex flex-col overflow-hidden">
+            {habitsList.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-8">
+                No habits yet. Add some on the left! 👈
+              </p>
+            ) : (
+              <>
+                {/* Table Header */}
+                <div className="flex justify-between font-bold text-indigo-700 mb-2 px-1 text-sm">
+                  <p className="flex-1">Habit</p>
+                  <p className="w-20 text-center">Time</p>
+                  <p className="w-24 text-center">Actions</p>
                 </div>
-            )})}
-            <button></button>
-       </div>
-       <button
-  onClick={() => navigate('/myday')}
-  type='button'
-  className="w-full max-w-xs sm:max-w-md mt-4 py-3 rounded-xl font-mono font-bold text-white text-lg
-    bg-linear-to-r from-indigo-500 to-purple-500
-    shadow-lg hover:shadow-indigo-300
-    transform transition-all duration-300
-    hover:scale-105 hover:from-indigo-600 hover:to-purple-600
-    active:scale-95"
->
-  Let's Go 🚀
-</button>
-</div>
- </form>
- </div>
- </>
-  )
+
+                {/* Habit Rows */}
+                <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1">
+                  {habitsList.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 bg-purple-50 rounded-xl px-3 py-2 border border-purple-100"
+                    >
+                      <span className="flex-1 text-sm text-gray-800 truncate">{item.name}</span>
+                      <span className="w-20 text-center text-xs text-gray-500">{item.time}</span>
+                      <div className="flex gap-1.5 w-24 justify-center">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="px-2 py-1 text-xs border border-cyan-500 text-cyan-500 rounded-lg hover:bg-cyan-500 hover:text-white transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item._id)}
+                          className="px-2 py-1 text-xs border border-red-500 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-colors"
+                        >
+                          Del
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            </div>
+
+            {/* Let's Go inside the right panel on desktop */}
+            <button
+              onClick={() => navigate("/myday", { state: { habits: habitsList } })}
+              className="w-full mt-auto pt-4 py-3 rounded-xl font-mono font-bold text-white text-lg bg-linear-to-r from-indigo-500 to-purple-500 shadow-lg hover:shadow-indigo-300 transform transition-all duration-300 hover:scale-105 hover:from-indigo-600 hover:to-purple-600 active:scale-95"
+            >
+              Let's Go 🚀
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* On mobile, Let's Go button at the bottom (hidden on md+) */}
+      <button
+        onClick={() => navigate("/myday", { state: { habits: habitsList } })}
+        className="md:hidden w-full max-w-xs sm:max-w-md mt-6 mb-6 py-3 rounded-xl font-mono font-bold text-white text-lg bg-linear-to-r from-indigo-500 to-purple-500 shadow-lg hover:shadow-indigo-300 transform transition-all duration-300 hover:scale-105 active:scale-95"
+      >
+        Let's Go 🚀
+      </button>
+    </div>
+  );
 }
 
-export default Lifestyleselection
+export default Lifestyleselection;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import logo from "../assets/Images/logo.png";
 import { useNavigate } from "react-router-dom";
+import { fetchHabits, updateHabitApi  } from "../api/habitApi"; 
 // import { FiX, FiUser, FiCamera } from "react-icons/fi";
 function Myday() {
   const navigate = useNavigate();
@@ -9,11 +10,19 @@ function Myday() {
   const [Timeicon, setTimeicon] = useState("☀️")
   // load habits
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("habits")) || [];
-    sethabits(stored);
+    const loadHabits = async () => {
+      const data = await fetchHabits();
+      sethabits(data);
+    };
+    loadHabits();
   }, []);
+
+
+  
   const handleLogout = () => {
     localStorage.removeItem("token");
+     localStorage.removeItem("name");
+    localStorage.removeItem("lastHabitReset");
     navigate("/login");
   };
   //  load username
@@ -21,31 +30,49 @@ function Myday() {
     const User = localStorage.getItem("name");
     if (User) setname(User);
   }, []);
-      const handleToggle = (index) => {
-        const updatedHabits = [...habits];
-        updatedHabits[index].completed = !updatedHabits[index].completed;
-        sethabits(updatedHabits);
-        localStorage.setItem("habits", JSON.stringify(updatedHabits));
-      }
+
+
+      const handleToggle = async (index) => {
+          const targetHabit = habits[index];
+        const newCompleted = !targetHabit.completed;
+           sethabits(prev =>
+      prev.map(h => h._id === targetHabit._id ? { ...h, completed: newCompleted } : h)
+    );
+ 
+    try {
+      await updateHabitApi(targetHabit._id, { completed: newCompleted });
+    } catch (error) {
+      console.error("Failed to toggle habit:", error);
+      // If backend fails, UNDO the optimistic update
+      sethabits(prev =>
+        prev.map(h => h._id === targetHabit._id ? { ...h, completed: targetHabit.completed } : h)
+      );
+    }
+  };
 // habit reset after 24 every hours 
 useEffect(()=>{
-  const reset =()=>{
+  const reset = async ()=>{
     const today = new Date().toDateString();
-    const lastReset = localStorage.getItem("lastHabitReset");
+       const userId = localStorage.getItem("userId") || "default";
+  const lastResetKey = `lastHabitReset_${userId}`;
+const lastReset = localStorage.getItem(lastResetKey);
 
     if( lastReset != today){
-       const stored = JSON.parse(localStorage.getItem("habits")) || [];
-       const Update = stored.map((h)=>({...h, completed:false}))
-       sethabits(Update)
-       localStorage.setItem("habits", JSON.stringify(Update))
-       localStorage.setItem("lastHabitReset", today);
+       localStorage.setItem(lastResetKey, today);
+      sethabits(prev => prev.map(h => ({ ...h, completed: false })));
+     
+        // Save reset to DB for all habits at once (parallel)
+        await Promise.all(
+          habits.map(h => updateHabitApi(h._id, { completed: false }))
+        );
+        
     }
-  }
-  reset()
-  const interval = setInterval(reset,60000);
+  };
+if (habits.length > 0) reset();
+ 
+    const interval = setInterval(reset, 60000);
     return () => clearInterval(interval);
-
-},[])
+  }, [habits.length]);
 
 
 
@@ -74,14 +101,13 @@ const interval = setInterval(checkTime, 60000);
         <img src={logo} alt="Logo" className="w-auto h-26  " />
         {/* logout button */}
         <div>
-         <button onClick={handleLogout} className="relative flex items-center gap-2 px-5 py-2
-          border-2 border-indigo-400 text-indigo-500
-          font-mono font-semibold rounded-xl overflow-hidden
-          hover:text-white transition-all duration-300 group">
-          <span className="absolute inset-0 bg-linear-to-r from-indigo-400 to-purple-400
-            transform -translate-x-full group-hover:translate-x-0
-            transition-transform duration-300"></span>
-          <span className="relative">Logout ✦</span>
+          <button
+          onClick={handleLogout}
+          class="relative flex items-center gap-2 px-5 py-2 border-indigo-500 bg-linear-to-r from-indigo-500 to-purple-500 text-white font-mono font-semibold rounded-xl overflow-hidden hover:text-white transition-all duration-300 group"
+        >
+       
+          <span class="absolute inset-0 bg-linear-to-r from-indigo-400 to-purple-400 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></span>
+          <span class="relative">Logout ✦</span>
         </button>
         
         </div>
@@ -135,7 +161,7 @@ checked:bg-gray-500 checked:border-gray-500"       /></div>
        
       </div>
  <div className="text-center mt-8">
-    <button onClick={() => navigate('/lifestyleselection')} className="px-6 py-2 border-2 border-indigo-500 text-indigo-600 font-mono font-bold rounded-xl hover:bg-indigo-600 hover:text-white transition-all duration-300">
+    <button onClick={() => navigate('/lifestyleselection')} className="p-3 border-indigo-500 bg-linear-to-r from-indigo-500 to-purple-500 text-white font-mono font-semibold rounded-xl overflow-hidden hover:text-white transition-all duration-300 group">
       ← Edit Habits
     </button>
   </div>

@@ -7,7 +7,7 @@ const ensureAuthenticated = (req, res, next)=>{
         const token = auth.split(' ')[1];
 
     try{
-        const decoded = jwt.verify(auth, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
         next();
     }
