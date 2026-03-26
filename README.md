@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-# RoutineCraft-Habite-Tracker
+# RoutineCraft-Habite-Tracker + AI Integration
 =======
 # RoutineCraft-Habite-Tracker-
 >>>>>>> 0a4c27e (Initial commit of RoutineCraft frontend + backend without secrets)
