@@ -21,10 +21,8 @@ const router = require('express').Router();
 router.post('/login', loginValidation, login);
 router.post('/signup', SignupValidation, Signup);
 
-// GOOGLE LOGIN
-
-//  Start Google login 
-router.get('/google', googleLogin);
+// GOOGLE LOGIN — frontend POSTs ID token in JSON body (@react-oauth/google)
+router.post('/google', googleLogin);
 
 //  Google callback 
 router.get('/google/callback', async (req, res) => {

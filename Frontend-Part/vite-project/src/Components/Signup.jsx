@@ -114,7 +114,7 @@ function SignUp() {
               style={{ color: "rgba(255,255,255,0.88)" }}
             >
               <span
-                className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
                 style={{ background: "rgba(255,255,255,0.15)", color: "#C4AFFE" }}
               >
                 ✓

@@ -186,6 +186,27 @@ const login = async (req, res) => {
 const googleLogin = async (req, res) => {
   try {
     const { credential } = req.body;
+    // #region agent log
+    fetch("http://127.0.0.1:7561/ingest/a683136e-24a1-46cf-94e9-cb4f073f632c", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "3fef36",
+      },
+      body: JSON.stringify({
+        sessionId: "3fef36",
+        runId: "initial",
+        hypothesisId: "H5",
+        location: "AuthController.js:googleLogin:entry",
+        message: "Backend googleLogin called",
+        data: {
+          hasCredential: Boolean(credential),
+          audienceConfigured: Boolean(process.env.GOOGLE_CLIENT_ID),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     if (!credential) {
       return res.status(400).json({ success: false, message: "Token missing" });
     }
@@ -222,6 +243,26 @@ const googleLogin = async (req, res) => {
       user,
     });
   } catch (error) {
+    // #region agent log
+    fetch("http://127.0.0.1:7561/ingest/a683136e-24a1-46cf-94e9-cb4f073f632c", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "3fef36",
+      },
+      body: JSON.stringify({
+        sessionId: "3fef36",
+        runId: "initial",
+        hypothesisId: "H5",
+        location: "AuthController.js:googleLogin:catch",
+        message: "Backend googleLogin failed",
+        data: {
+          errorMessage: error?.message || "unknown",
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     console.log(error);
     return res.json({ success: false, message: "Google authentication failed" });
   }

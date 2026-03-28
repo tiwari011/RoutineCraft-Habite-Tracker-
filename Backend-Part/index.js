@@ -1,25 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-
 const app = express();
 const PORT = process.env.PORT || 8080;
-
-// Import routers
 const authRouter = require('./Routes/AuthRouter');
 const habitRouter = require('./Routes/habitRouter');
 const aiRouter = require('./Routes/aiRouter');
-
-// Import DB
 const db = require('./Models/Database');
 
-// ----- MIDDLEWARE -----
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://routine-craft-habite-tracker.vercel.app'
-  ]
-})); // allow React frontend
+// - MIDDLEWARE (add extra origins via Render env CORS_ORIGINS=comma,separated,urls)
+const defaultCorsOrigins = [
+  'http://localhost:5173',
+  'https://routine-craft-habite-tracker-git-main-tiwari011s-projects.vercel.app',
+];
+const extraCors = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean)
+  : [];
+app.use(cors({ origin: [...defaultCorsOrigins, ...extraCors] })); 
 app.use(express.json()); // parse JSON bodies
 
 // ----- ROUTES -----
