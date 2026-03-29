@@ -52,7 +52,7 @@ function Myday() {
 // reset evevry min 
  useEffect(() => {
     const reset = async () => {
-      const currentHabits = habitsRef.current;
+      const currentHabits = habits.current;
       if (currentHabits.length === 0) return;
 
       const now = new Date();
