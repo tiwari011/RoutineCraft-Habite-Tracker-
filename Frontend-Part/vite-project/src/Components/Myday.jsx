@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import logo from "../assets/Images/logo.png";
 import { useNavigate } from "react-router-dom";
 import { fetchHabits, updateHabitApi } from "../api/habitApi";
@@ -8,12 +8,6 @@ function Myday() {
   const [habits, sethabits] = useState([]);
   const [name, setname] = useState("");
   const [Timeicon, setTimeicon] = useState("☀️");
-  const habitsRef = useRef([]);
-
-  // keep ref in sync with habits state
-  useEffect(() => {
-    habitsRef.current = habits;
-  }, [habits]);
 
   // load habits
   useEffect(() => {
@@ -32,7 +26,6 @@ function Myday() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("name");
-    localStorage.removeItem("lastHabitReset");
     navigate("/login");
   };
 
@@ -58,43 +51,6 @@ function Myday() {
       );
     }
   };
-
-  // reset every day
-  useEffect(() => {
-  const reset = async () => {
-    const currentHabits = habitsRef.current;
-
-    if (!currentHabits || !Array.isArray(currentHabits) || currentHabits.length === 0) {
-      return;
-    }
-
-    const now = new Date();
-
-    // ✅ PRODUCTION MODE — resets at midnight
-    const todayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-
-    const userId = localStorage.getItem("userId") || "default";
-    const lastResetKey = `lastHabitReset_${userId}`;
-    const lastReset = localStorage.getItem(lastResetKey);
-
-    if (lastReset !== todayKey) {
-      console.log("🔄 Resetting habits at midnight");
-      localStorage.setItem(lastResetKey, todayKey);
-      sethabits(prev => prev.map(h => ({ ...h, completed: false })));
-      try {
-        await Promise.all(
-          currentHabits.map(h => updateHabitApi(h._id, { completed: false }))
-        );
-        console.log("✅ Habits reset done");
-      } catch (err) {
-        console.error("Reset DB error:", err);
-      }
-    }
-  };
-
-  const interval = setInterval(reset, 60000); // checks every 1 minute
-  return () => clearInterval(interval);
-}, []);
 
   // load Timeicon
   useEffect(() => {

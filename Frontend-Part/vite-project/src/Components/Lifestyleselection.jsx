@@ -208,13 +208,7 @@ setHabitsList(prev => [...prev, saved]);
         </div>
       </div>
 
-      {/* On mobile, Let's Go button at the bottom (hidden on md+) */}
-      <button
-        onClick={() => navigate("/myday", { state: { habits: habitsList } })}
-        className="md:hidden w-full max-w-xs sm:max-w-md mt-6 mb-6 py-3 rounded-xl font-mono font-bold text-white text-lg bg-linear-to-r from-indigo-500 to-purple-500 shadow-lg hover:shadow-indigo-300 transform transition-all duration-300 hover:scale-105 active:scale-95"
-      >
-        Let's Go 🚀
-      </button>
+     
     </div>
   );
 }

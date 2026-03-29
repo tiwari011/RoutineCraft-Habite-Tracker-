@@ -13,7 +13,8 @@ const Schema=mongoose.Schema;
     password:{
         type:String,
     
-    }
+    },
+     lastLoginAt: { type: Date, default: null }
  })
  const UserModel = mongoose.model('users', UserSchema);
  module.exports=UserModel;

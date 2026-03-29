@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import Loader from "./Loader";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { GoogleLogin } from "@react-oauth/google";
+import { fetchHabits, updateHabitApi } from "../api/habitApi"; // ✅ ADD THIS IMPORT
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -15,6 +16,35 @@ const features = [
   "Auto uncheck for next day a habit list for everyday",
   "AI to get suggestions according to your schedule"
 ];
+
+const resetHabitsIfNewDay = async (lastLoginAt) => {
+  if (!lastLoginAt) {
+    console.log("New user — skipping habit reset");
+    return;
+  }
+  try {
+    const now = new Date();
+    const lastLogin = new Date(lastLoginAt);
+
+    const todayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    const lastKey  = `${lastLogin.getFullYear()}-${lastLogin.getMonth() + 1}-${lastLogin.getDate()}`;
+
+    if (lastKey !== todayKey) {
+      console.log("New day detected — resetting habits");
+      const habits = await fetchHabits();
+      if (Array.isArray(habits) && habits.length > 0) {
+        await Promise.all(
+          habits.map(h => updateHabitApi(h._id, { completed: false }))
+        );
+        console.log("✅ Habits reset done");
+      }
+    } else {
+      console.log("Same day — no reset needed");
+    }
+  } catch (err) {
+    console.error("Habit reset error:", err);
+  }
+};
 
 function Login() {
   const navigate = useNavigate();
@@ -37,12 +67,16 @@ function Login() {
       if (result.success) {
         localStorage.setItem("token", result.jwtToken);
         localStorage.setItem("name", result.user.name);
+
+        await resetHabitsIfNewDay(result.user.lastLoginAt); // ✅ NOW CALLED HERE
+
         result.isNewUser ? navigate("/lifestyleselection") : navigate("/myday");
       } else {
         alert("Login failed: " + result.message);
       }
     } catch (error) {
       console.log("Login error:", error);
+      alert("Login failed. Please check your backend connection and try again.");
     }
   };
 
@@ -57,12 +91,16 @@ function Login() {
       if (result.success) {
         localStorage.setItem("token", result.jwtToken);
         localStorage.setItem("name", result.user.name);
+
+        await resetHabitsIfNewDay(result.user.lastLoginAt); // ✅ NOW CALLED HERE
+
         result.isNewUser ? navigate("/lifestyleselection") : navigate("/myday");
       } else {
-        alert("Google login failed");
+        alert("Google login failed: " + (result.message || "Please try again."));
       }
     } catch (error) {
       console.log("Google login error:", error);
+      alert("Google login failed. Please check your backend connection and try again.");
     }
   };
 

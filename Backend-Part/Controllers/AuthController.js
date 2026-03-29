@@ -14,6 +14,7 @@ const Signup = async (req, res) => {
     }
     const userModel = new UserModel({ name, email, password });
     userModel.password = await bcrypt.hash(password, 10);
+    userModel.lastLoginAt = new Date(); // ✅ set on signup so first login comparison works
     await userModel.save();
     res.status(201).json({
       message: "User registered successfully",
@@ -49,6 +50,11 @@ const login = async (req, res) => {
       { expiresIn: "24h" }
     );
 
+    const lastLoginAt = user.lastLoginAt; // ✅ save OLD value before updating
+
+    user.lastLoginAt = new Date(); // ✅ update to now
+    await user.save();
+
     res.status(200).json({
       message: "Login successful",
       success: true,
@@ -58,6 +64,7 @@ const login = async (req, res) => {
         _id: user._id,
         email: user.email,
         name: user.name,
+        lastLoginAt, // ✅ send OLD value so frontend can compare
       },
     });
   } catch (error) {
@@ -85,11 +92,17 @@ const googleLogin = async (req, res) => {
     let isNewUser = !user;
 
     if (!user) {
-      user = await UserModel.create({ email, name });
+      // ✅ new Google user — set lastLoginAt on creation
+      user = await UserModel.create({ email, name, lastLoginAt: new Date() });
     } else {
       const habitCount = await HabitModel.countDocuments({ userId: user._id });
       isNewUser = habitCount === 0;
     }
+
+    const lastLoginAt = user.lastLoginAt; // ✅ save OLD value before updating
+
+    user.lastLoginAt = new Date(); // ✅ update to now
+    await user.save();
 
     const jwtToken = jwt.sign(
       { email: user.email, _id: user._id },
@@ -101,7 +114,12 @@ const googleLogin = async (req, res) => {
       success: true,
       jwtToken,
       isNewUser,
-      user,
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        lastLoginAt, // ✅ send OLD value so frontend can compare
+      },
     });
   } catch (error) {
     console.log(error);
