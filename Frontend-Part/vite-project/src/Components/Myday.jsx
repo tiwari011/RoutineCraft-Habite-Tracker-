@@ -59,45 +59,42 @@ function Myday() {
     }
   };
 
-  // reset every 10 seconds for testing
+  // reset every day
   useEffect(() => {
-    const reset = async () => {
-      const currentHabits = habitsRef.current; // ← get fresh habits from ref
+  const reset = async () => {
+    const currentHabits = habitsRef.current;
 
-      if (!currentHabits || !Array.isArray(currentHabits) || currentHabits.length === 0) {
-        return;
+    if (!currentHabits || !Array.isArray(currentHabits) || currentHabits.length === 0) {
+      return;
+    }
+
+    const now = new Date();
+
+    // ✅ PRODUCTION MODE — resets at midnight
+    const todayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+
+    const userId = localStorage.getItem("userId") || "default";
+    const lastResetKey = `lastHabitReset_${userId}`;
+    const lastReset = localStorage.getItem(lastResetKey);
+
+    if (lastReset !== todayKey) {
+      console.log("🔄 Resetting habits at midnight");
+      localStorage.setItem(lastResetKey, todayKey);
+      sethabits(prev => prev.map(h => ({ ...h, completed: false })));
+      try {
+        await Promise.all(
+          currentHabits.map(h => updateHabitApi(h._id, { completed: false }))
+        );
+        console.log("✅ Habits reset done");
+      } catch (err) {
+        console.error("Reset DB error:", err);
       }
+    }
+  };
 
-      const now = new Date();
-
-      // 🔴 TESTING MODE — resets every 10 seconds
-      const todayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${Math.floor(now.getSeconds() / 10)}`;
-
-      // ✅ PRODUCTION MODE — uncomment this and delete above line after testing
-      // const todayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-
-      const userId = localStorage.getItem("userId") || "default";
-      const lastResetKey = `lastHabitReset_${userId}`;
-      const lastReset = localStorage.getItem(lastResetKey);
-
-      if (lastReset !== todayKey) {
-        console.log("🔄 Resetting habits at:", todayKey);
-        localStorage.setItem(lastResetKey, todayKey);
-        sethabits(prev => prev.map(h => ({ ...h, completed: false })));
-        try {
-          await Promise.all(
-            currentHabits.map(h => updateHabitApi(h._id, { completed: false }))
-          );
-          console.log("✅ Habits reset done");
-        } catch (err) {
-          console.error("Reset DB error:", err);
-        }
-      }
-    };
-
-    const interval = setInterval(reset, 10000);
-    return () => clearInterval(interval);
-  }, []); // ← empty array, uses ref for fresh data
+  const interval = setInterval(reset, 60000); // checks every 1 minute
+  return () => clearInterval(interval);
+}, []);
 
   // load Timeicon
   useEffect(() => {
