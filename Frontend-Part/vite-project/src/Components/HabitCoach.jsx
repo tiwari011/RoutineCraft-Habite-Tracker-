@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { fetchHabits } from "../api/habitApi";
+
+const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 function TypingIndicator() {
   return (
     <div className="flex items-end gap-2">
@@ -133,7 +135,7 @@ function HabitCoach({ onAddHabit }) {
     ]);
 
     try {
-      const res = await fetch("http://localhost:8080/api/ai/generate-routine", {
+      const res = await fetch(`${API}/api/ai/generate-routine`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ age, goal, profession }),
@@ -171,8 +173,7 @@ function HabitCoach({ onAddHabit }) {
   };
 
   return (
-    // ── No more full-screen wrapper. Just the chat card itself. ──
-    <div className="w-full flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 ">
+    <div className="w-full flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 bg-white shrink-0">
         <div className="w-10 h-10 rounded-full bg-violet-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
