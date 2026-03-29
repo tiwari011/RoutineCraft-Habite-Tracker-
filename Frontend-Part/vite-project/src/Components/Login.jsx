@@ -5,12 +5,13 @@ import Loader from "./Loader";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { GoogleLogin } from "@react-oauth/google";
 
+const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const features = [
   "Track habits daily with streaks",
   "Personalised lifestyle routines",
   "Simple, distraction-free interface",
-   "Get notification for unfinished habits on the email",
+  "Get notification for unfinished habits on the email",
   "Auto uncheck for next day a habit list for everyday",
   "AI to get suggestions according to your schedule"
 ];
@@ -18,24 +19,7 @@ const features = [
 function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
-  const sendDebugLog = (payload) => {
-    // #region agent log
-    fetch("http://127.0.0.1:7561/ingest/a683136e-24a1-46cf-94e9-cb4f073f632c", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "3fef36",
-      },
-      body: JSON.stringify({
-        sessionId: "3fef36",
-        runId: "initial",
-        ...payload,
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  };
+
   const {
     register,
     handleSubmit,
@@ -53,8 +37,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
       if (result.success) {
         localStorage.setItem("token", result.jwtToken);
         localStorage.setItem("name", result.user.name);
-      result.isNewUser ? navigate("/lifestyleselection") : navigate("/myday");
-      
+        result.isNewUser ? navigate("/lifestyleselection") : navigate("/myday");
       } else {
         alert("Login failed: " + result.message);
       }
@@ -64,16 +47,6 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
-    sendDebugLog({
-      hypothesisId: "H3",
-      location: "Login.jsx:handleGoogleSuccess:start",
-      message: "Google success callback fired",
-      data: {
-        origin: window.location.origin,
-        apiBase: API,
-        hasCredential: Boolean(credentialResponse?.credential),
-      },
-    });
     try {
       const response = await fetch(`${API}/auth/google`, {
         method: "POST",
@@ -81,34 +54,14 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
         body: JSON.stringify({ credential: credentialResponse.credential }),
       });
       const result = await response.json();
-      sendDebugLog({
-        hypothesisId: "H4",
-        location: "Login.jsx:handleGoogleSuccess:apiResponse",
-        message: "Backend /auth/google response received",
-        data: {
-          status: response.status,
-          ok: response.ok,
-          success: result?.success,
-          message: result?.message || null,
-        },
-      });
       if (result.success) {
         localStorage.setItem("token", result.jwtToken);
         localStorage.setItem("name", result.user.name);
-          result.isNewUser ? navigate("/lifestyleselection") : navigate("/myday");
-
+        result.isNewUser ? navigate("/lifestyleselection") : navigate("/myday");
       } else {
         alert("Google login failed");
       }
     } catch (error) {
-      sendDebugLog({
-        hypothesisId: "H4",
-        location: "Login.jsx:handleGoogleSuccess:catch",
-        message: "Backend /auth/google request failed",
-        data: {
-          errorMessage: error?.message || "unknown",
-        },
-      });
       console.log("Google login error:", error);
     }
   };
@@ -129,7 +82,6 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
           md:flex-1 md:px-10 md:py-16 md:gap-8"
         style={{ background: "linear-gradient(145deg, #3B5BF6 0%, #7B3FF5 60%, #9B3FF0 100%)" }}
       >
-        {/*  hidden on mobile to keep it clean */}
         <div
           className="hidden md:block absolute w-72 h-72 rounded-full -top-16 -right-16 pointer-events-none"
           style={{ background: "rgba(255,255,255,0.06)" }}
@@ -153,14 +105,13 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
           </span>
         </div>
 
-        {/* Tagline*/}
+        {/* Tagline */}
         <div className="z-10">
           <h1 className="text-2xl md:text-4xl font-bold text-white leading-snug">
             Build habits that
             <br />
             <span style={{ color: "#C4AFFE" }}>actually stick.</span>
           </h1>
-          {/* Subtitle visible on mobile only */}
           <p className="mt-2 text-sm md:hidden" style={{ color: "rgba(255,255,255,0.75)" }}>
             Design, track, and maintain daily routines — one habit at a time.
           </p>
@@ -193,7 +144,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
           ))}
         </ul>
 
-        {/* Mobile: small feature*/}
+        {/* Mobile: feature pills */}
         <div className="flex flex-wrap gap-2 md:hidden z-10">
           {features.map((f) => (
             <span
@@ -275,18 +226,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8080";
           <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => {
-                sendDebugLog({
-                  hypothesisId: "H1",
-                  location: "Login.jsx:GoogleLogin:onError",
-                  message: "Google SDK login error callback fired",
-                  data: {
-                    origin: window.location.origin,
-                    apiBase: API,
-                  },
-                });
-                console.log("Google Login Failed");
-              }}
+              onError={() => console.log("Google Login Failed")}
             />
           </div>
 
