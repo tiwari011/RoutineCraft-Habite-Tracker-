@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "start": "nodemon index.js"
-  },
+"scripts": {
+  "start": "node index.js",
+  "dev": "nodemon index.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -26,6 +27,6 @@
     "openai": "^6.32.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.14"
   }
 }
