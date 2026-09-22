@@ -14,7 +14,8 @@ router.post("/generate-routine", async (req, res) => {
     }
 
     const result = await client.chat.completions.create({
-   model: "llama-3.1-8b-instant",
+  //  model: "llama-3.1-8b-instant",
+  model: "llama-3.3-70b-specdec",
       max_tokens: 500,
       messages: [
         {
